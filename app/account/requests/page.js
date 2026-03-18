@@ -89,7 +89,7 @@ function MyRequestsContent() {
           </div>
         ) : (
           requests.map((req) => {
-            const badge = STATUS_LABEL[req.status] || STATUS_LABEL.closed;
+            const badge = STATUS_LABEL[req.status] || { text: 'Managed', cls: 'bg-gray-100 text-gray-500' };
             const isActive = req.status === 'active';
             const busy = closing === req.id;
             return (
@@ -109,6 +109,18 @@ function MyRequestsContent() {
                     </span>
                   </div>
                 </div>
+
+                {!isActive && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleClose(req, 'delete')}
+                      disabled={busy}
+                      className="flex-1 bg-red-50 text-[#E8334A] text-xs font-semibold py-2 rounded-full hover:bg-red-100 transition-colors disabled:opacity-50"
+                    >
+                      {busy ? '...' : 'Delete Forever'}
+                    </button>
+                  </div>
+                )}
 
                 {isActive && (
                   <div className="flex gap-2 mt-3">

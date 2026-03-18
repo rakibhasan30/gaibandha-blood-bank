@@ -85,13 +85,13 @@ function HomeContent() {
         </div>
 
         {/* Stats row */}
-        <div className="flex gap-6 mt-5">
-          <div className="text-white">
+        <div className="flex justify-center items-center gap-10 mt-5">
+          <div className="text-white text-center">
             <p className="text-2xl font-bold leading-tight">{stats.requestCount}</p>
             <p className="text-white/70 text-xs mt-0.5">New Request</p>
           </div>
-          <div className="w-px bg-white/30" />
-          <div className="text-white">
+          <div className="w-px h-8 bg-white/30" />
+          <div className="text-white text-center">
             <p className="text-2xl font-bold leading-tight">
               {stats.livesSaved >= 1000 ? `${(stats.livesSaved / 1000).toFixed(0)}K+` : `${stats.livesSaved}`}
             </p>

@@ -34,8 +34,7 @@ export function useAuth() {
     setLoading(false);
   }
 
-  const login = useCallback(async (phone, password) => {
-    const email = phoneToEmail(phone);
+  const login = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;

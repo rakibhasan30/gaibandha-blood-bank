@@ -7,19 +7,25 @@ import BottomNav from '@/components/BottomNav';
 import DonorCard from '@/components/DonorCard';
 import SelectField from '@/components/SelectField';
 import { supabase } from '@/lib/supabase';
-import { BLOOD_GROUPS } from '@/lib/constants';
+import { BLOOD_GROUPS, DISTRICTS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 function DonorsContent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [donors, setDonors] = useState([]);
-  const [filter, setFilter] = useState('');
+  const [bloodFilter, setBloodFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Once profile loads, default city to user's city
+  useEffect(() => {
+    if (profile?.city) setCityFilter(profile.city);
+  }, [profile?.city]);
 
   useEffect(() => {
     if (user) fetchDonors();
-  }, [filter, user]);
+  }, [bloodFilter, cityFilter, user]);
 
   async function fetchDonors() {
     setLoading(true);
@@ -28,7 +34,8 @@ function DonorsContent() {
       .select('*')
       .neq('id', user.id)
       .order('created_at', { ascending: false });
-    if (filter) query = query.eq('blood_group', filter);
+    if (bloodFilter) query = query.eq('blood_group', bloodFilter);
+    if (cityFilter) query = query.eq('city', cityFilter);
     const { data } = await query;
     setDonors(data || []);
     setLoading(false);
@@ -57,14 +64,25 @@ function DonorsContent() {
       <div className="px-5 mt-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-[#E8334A] text-base">Donors</h2>
-          <div className="w-36">
-            <SelectField
-              id="filterBloodGroup"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              options={BLOOD_GROUPS}
-              placeholder="All Groups"
-            />
+          <div className="flex gap-2">
+            <div className="w-28">
+              <SelectField
+                id="filterCity"
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                options={DISTRICTS}
+                placeholder="All Cities"
+              />
+            </div>
+            <div className="w-28">
+              <SelectField
+                id="filterBloodGroup"
+                value={bloodFilter}
+                onChange={(e) => setBloodFilter(e.target.value)}
+                options={BLOOD_GROUPS}
+                placeholder="All Groups"
+              />
+            </div>
           </div>
         </div>
 

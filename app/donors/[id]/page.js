@@ -7,30 +7,45 @@ import BottomNav from '@/components/BottomNav';
 import Avatar from '@/components/Avatar';
 import DonorCard from '@/components/DonorCard';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 function DonorProfileContent() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   const [donor, setDonor] = useState(null);
   const [donations, setDonations] = useState([]);
+  const [canCall, setCanCall] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDonor();
-  }, [params.id]);
+    if (user) fetchDonor();
+  }, [params.id, user]);
 
   async function fetchDonor() {
-    const [{ data: donorData }, { data: donationsData }] = await Promise.all([
+    const [{ data: donorData }, { data: donationsData }, { data: acceptedData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', params.id).single(),
       supabase
         .from('donations')
         .select('*, blood_requests(hospital_name, date_needed, blood_group, city)')
         .eq('donor_id', params.id)
         .order('donated_at', { ascending: false }),
+      // Check if this donor accepted a request made by the current user
+      supabase
+        .from('donations')
+        .select('id, blood_requests(requester_id)')
+        .eq('donor_id', params.id)
+        .eq('status', 'accepted'),
     ]);
 
     setDonor(donorData);
     setDonations(donationsData || []);
+
+    // Allow call only if current user is the requester of an accepted donation
+    const allowed = (acceptedData || []).some(
+      (d) => d.blood_requests?.requester_id === user?.id
+    );
+    setCanCall(allowed);
     setLoading(false);
   }
 
@@ -99,13 +114,19 @@ function DonorProfileContent() {
           </div>
         )}
 
-        {/* Call Now button */}
-        <a
-          href={`tel:${donor.phone}`}
-          className="block w-full bg-[#E8334A] text-white font-bold py-4 rounded-full text-center text-base hover:bg-[#C4253A] transition-colors"
-        >
-          Call Now — {donor.phone}
-        </a>
+        {/* Call Now — only visible to requesters whose request this donor accepted */}
+        {canCall ? (
+          <a
+            href={`tel:${donor.phone}`}
+            className="block w-full bg-[#E8334A] text-white font-bold py-4 rounded-full text-center text-base hover:bg-[#C4253A] transition-colors"
+          >
+            Call Now — {donor.phone}
+          </a>
+        ) : (
+          <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-full text-center text-sm">
+            Phone number hidden — only visible after donor accepts your request
+          </div>
+        )}
       </div>
 
       <BottomNav />

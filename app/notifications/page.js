@@ -46,7 +46,13 @@ function NotificationsContent() {
       );
     }
     if (notif.request_id) {
-      router.push(`/requests/${notif.request_id}`);
+      // If a donor accepted, take requester to the accepted screen
+      const isAcceptance = notif.title?.toLowerCase().includes('accepted');
+      if (isAcceptance) {
+        router.push(`/requests/${notif.request_id}/accepted`);
+      } else {
+        router.push(`/requests/${notif.request_id}`);
+      }
     }
   }
 
@@ -78,7 +84,7 @@ function NotificationsContent() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.is_read ? 'bg-gray-300' : 'bg-[#E8334A]'}`} />
+                <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${notif.is_read ? 'bg-gray-300' : 'bg-[#E8334A]'}`} />
                 <div className="flex-1">
                   <p className="font-semibold text-gray-800 text-sm">{notif.title}</p>
                   <p className="text-gray-500 text-xs mt-1">{notif.message}</p>

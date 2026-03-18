@@ -82,8 +82,11 @@ function AccountContent() {
       </div>
 
       <div className="mx-5 flex flex-col gap-3">
+        <PrimaryButton onClick={() => router.push('/account/requests')}>
+          My Blood Requests
+        </PrimaryButton>
         <PrimaryButton onClick={() => router.push('/account/history')}>
-          See Donation History
+          Donation History
         </PrimaryButton>
         <button
           onClick={handleLogout}

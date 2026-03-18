@@ -18,6 +18,7 @@ function RequestDetailContent() {
   const [loading, setLoading] = useState(true);
   const [donating, setDonating] = useState(false);
   const [alreadyDonated, setAlreadyDonated] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -116,6 +117,30 @@ function RequestDetailContent() {
     }
   }
 
+  async function handleClose(type) {
+    if (!request) return;
+    const confirmed = window.confirm(
+      type === 'delete'
+        ? 'Delete this request permanently?'
+        : 'Mark this request as managed? It will be removed from the active list.'
+    );
+    if (!confirmed) return;
+    setClosing(true);
+    try {
+      if (type === 'delete') {
+        await supabase.from('blood_requests').delete().eq('id', request.id);
+      } else {
+        await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', request.id);
+      }
+      router.replace('/account/requests');
+    } catch (err) {
+      setToast('Something went wrong. Please try again.');
+      setTimeout(() => setToast(''), 3000);
+    } finally {
+      setClosing(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -191,19 +216,32 @@ function RequestDetailContent() {
         </div>
       </div>
 
-      <div className="mx-5">
-        <PrimaryButton
-          onClick={handleDonate}
-          disabled={donating || request.requester_id === user?.id || alreadyDonated}
-        >
-          {donating
-            ? 'Processing...'
-            : request.requester_id === user?.id
-            ? 'Your Request'
-            : alreadyDonated
-            ? 'Already Committed'
-            : 'Donate'}
-        </PrimaryButton>
+      <div className="mx-5 flex flex-col gap-3">
+        {request.requester_id === user?.id ? (
+          <>
+            <button
+              onClick={() => handleClose('managed')}
+              disabled={closing}
+              className="w-full bg-green-500 text-white font-bold py-4 rounded-full text-center text-base hover:bg-green-600 transition-colors disabled:opacity-50"
+            >
+              {closing ? 'Saving...' : 'Blood Managed — Close Request'}
+            </button>
+            <button
+              onClick={() => handleClose('delete')}
+              disabled={closing}
+              className="w-full bg-white border-2 border-gray-300 text-gray-500 font-semibold py-4 rounded-full text-center text-base hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Delete Request
+            </button>
+          </>
+        ) : (
+          <PrimaryButton
+            onClick={handleDonate}
+            disabled={donating || alreadyDonated}
+          >
+            {donating ? 'Processing...' : alreadyDonated ? 'Already Committed' : 'Donate'}
+          </PrimaryButton>
+        )}
       </div>
 
       {toast && (

@@ -57,21 +57,15 @@ function DonorProfileContent() {
     if (!acceptedDonationId) return;
     setMarking(true);
     try {
-      // Mark donation as completed
-      await supabase
-        .from('donations')
-        .update({ status: 'completed' })
-        .eq('id', acceptedDonationId);
-
-      // Increment donor's lives_saved
-      await supabase
-        .from('profiles')
-        .update({ lives_saved: (donor.lives_saved || 0) + 1 })
-        .eq('id', params.id);
-
+      const { error } = await supabase.rpc('complete_donation', {
+        p_donation_id: acceptedDonationId,
+        p_donor_profile_id: params.id,
+      });
+      if (error) throw error;
       setMarked(true);
     } catch (err) {
       console.error(err);
+      alert('Could not mark as complete. Please try again.');
     } finally {
       setMarking(false);
     }

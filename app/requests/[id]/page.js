@@ -17,6 +17,7 @@ function RequestDetailContent() {
   const [requester, setRequester] = useState(null);
   const [loading, setLoading] = useState(true);
   const [donating, setDonating] = useState(false);
+  const [alreadyDonated, setAlreadyDonated] = useState(false);
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -24,21 +25,37 @@ function RequestDetailContent() {
   }, [params.id]);
 
   async function fetchRequest() {
-    const { data: req } = await supabase
-      .from('blood_requests')
-      .select('*, profiles(id, full_name, profile_photo_url, city, blood_group)')
-      .eq('id', params.id)
-      .single();
+    const [{ data: req }, { data: myDonation }] = await Promise.all([
+      supabase
+        .from('blood_requests')
+        .select('*, profiles(id, full_name, profile_photo_url, city, blood_group)')
+        .eq('id', params.id)
+        .single(),
+      user
+        ? supabase
+            .from('donations')
+            .select('id')
+            .eq('request_id', params.id)
+            .eq('donor_id', user.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
 
     if (req) {
       setRequest(req);
       setRequester(req.profiles);
     }
+    if (myDonation) setAlreadyDonated(true);
     setLoading(false);
   }
 
   async function handleDonate() {
     if (!user || !request) return;
+    if (alreadyDonated) {
+      setToast('You have already committed to donate for this request.');
+      setTimeout(() => setToast(''), 3000);
+      return;
+    }
     setDonating(true);
     try {
       // Create donation record
@@ -46,14 +63,21 @@ function RequestDetailContent() {
         donor_id: user.id,
         request_id: request.id,
         status: 'accepted',
+        donated_at: new Date().toISOString(),
       });
       if (donErr) throw donErr;
 
-      // Increment units_fulfilled
+      // Increment units_fulfilled; mark request fulfilled if all units covered
+      const newFulfilled = (request.units_fulfilled || 0) + 1;
+      const requestUpdate = { units_fulfilled: newFulfilled };
+      if (newFulfilled >= (request.units_needed || 1)) {
+        requestUpdate.status = 'fulfilled';
+      }
       await supabase
         .from('blood_requests')
-        .update({ units_fulfilled: (request.units_fulfilled || 0) + 1 })
+        .update(requestUpdate)
         .eq('id', request.id);
+      setAlreadyDonated(true);
 
       // Create in-app notification for requester
       const donorName = profile?.full_name || 'A donor';
@@ -168,13 +192,22 @@ function RequestDetailContent() {
       </div>
 
       <div className="mx-5">
-        <PrimaryButton onClick={handleDonate} disabled={donating || request.requester_id === user?.id}>
-          {donating ? 'Processing...' : request.requester_id === user?.id ? 'Your Request' : 'Donate'}
+        <PrimaryButton
+          onClick={handleDonate}
+          disabled={donating || request.requester_id === user?.id || alreadyDonated}
+        >
+          {donating
+            ? 'Processing...'
+            : request.requester_id === user?.id
+            ? 'Your Request'
+            : alreadyDonated
+            ? 'Already Committed'
+            : 'Donate'}
         </PrimaryButton>
       </div>
 
       {toast && (
-        <div className="fixed bottom-24 left-4 right-4 bg-gray-900 text-white text-sm rounded-2xl px-4 py-3 text-center z-50 max-w-[440px] mx-auto">
+        <div className="fixed bottom-24 left-4 right-4 bg-gray-900 text-white text-sm rounded-2xl px-4 py-3 text-center z-50 max-w-110 mx-auto">
           {toast}
         </div>
       )}

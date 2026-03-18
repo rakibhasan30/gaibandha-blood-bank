@@ -45,12 +45,14 @@ function MyRequestsContent() {
     setClosing(req.id);
     try {
       if (type === 'delete') {
-        const { error } = await supabase.from('blood_requests').delete().eq('id', req.id);
+        const { data, error } = await supabase.from('blood_requests').delete().eq('id', req.id).select();
         if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Delete failed — permission denied or row not found.');
         setRequests((prev) => prev.filter((r) => r.id !== req.id));
       } else {
-        const { error } = await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', req.id);
+        const { data, error } = await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', req.id).select();
         if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Update failed — permission denied or row not found.');
         setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'closed' } : r));
       }
     } catch (err) {

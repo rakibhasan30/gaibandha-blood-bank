@@ -35,7 +35,13 @@ function RequestsContent() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_requests' }, fetchRequests)
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    const onFocus = () => fetchRequests();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [filter]);
 
   async function fetchRequests() {

@@ -37,7 +37,13 @@ function HomeContent() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_requests' }, fetchData)
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    const onFocus = () => fetchData();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   async function fetchData() {

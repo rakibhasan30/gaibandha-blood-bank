@@ -136,6 +136,7 @@ function RequestDetailContent() {
         if (error) throw error;
         if (!data || data.length === 0) throw new Error('Update failed — permission denied or row not found.');
       }
+      router.refresh();
       router.replace('/account/requests');
     } catch (err) {
       setToast('Failed: ' + (err.message || 'Something went wrong.'));

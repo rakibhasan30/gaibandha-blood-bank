@@ -35,12 +35,14 @@ function RequestsContent() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'blood_requests' }, fetchRequests)
       .subscribe();
 
-    const onFocus = () => fetchRequests();
-    window.addEventListener('focus', onFocus);
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchRequests(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
 
     return () => {
       supabase.removeChannel(channel);
-      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
     };
   }, [filter]);
 

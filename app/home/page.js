@@ -138,6 +138,7 @@ function HomeContent() {
                   date={req.date_needed}
                   bloodGroup={req.blood_group}
                   timeAgo={timeAgo(req.created_at)}
+                  isOwn={req.requester_id === user?.id}
                   onClick={() => router.push(`/requests/${req.id}`)}
                 />
               ))}
@@ -147,7 +148,7 @@ function HomeContent() {
       </div>
 
       {foregroundMessage && (
-        <div className="fixed top-4 left-4 right-4 bg-white rounded-2xl shadow-lg p-4 z-50 max-w-[440px] mx-auto">
+        <div className="fixed top-4 left-4 right-4 bg-white rounded-2xl shadow-lg p-4 z-50 max-w-110 mx-auto">
           <p className="font-semibold text-gray-800 text-sm">{foregroundMessage.notification?.title}</p>
           <p className="text-gray-500 text-xs mt-1">{foregroundMessage.notification?.body}</p>
         </div>

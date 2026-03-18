@@ -24,6 +24,7 @@ function HistoryContent() {
       .from('donations')
       .select('*, blood_requests(hospital_name, date_needed, blood_group, city, profiles(full_name, profile_photo_url))')
       .eq('donor_id', user.id)
+      .eq('status', 'completed')
       .order('donated_at', { ascending: false });
 
     setDonations(data || []);

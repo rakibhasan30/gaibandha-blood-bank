@@ -8,6 +8,7 @@ import DonorCard from '@/components/DonorCard';
 import SelectField from '@/components/SelectField';
 import { supabase } from '@/lib/supabase';
 import { BLOOD_GROUPS } from '@/lib/constants';
+import { useAuth } from '@/hooks/useAuth';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -21,6 +22,7 @@ function timeAgo(dateStr) {
 
 function RequestsContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(true);
@@ -83,6 +85,7 @@ function RequestsContent() {
               date={req.date_needed}
               bloodGroup={req.blood_group}
               timeAgo={timeAgo(req.created_at)}
+              isOwn={req.requester_id === user?.id}
               onClick={() => router.push(`/requests/${req.id}`)}
             />
           ))

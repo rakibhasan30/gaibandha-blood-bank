@@ -16,6 +16,9 @@ function DonorProfileContent() {
   const [donor, setDonor] = useState(null);
   const [donations, setDonations] = useState([]);
   const [canCall, setCanCall] = useState(false);
+  const [acceptedDonationId, setAcceptedDonationId] = useState(null);
+  const [marking, setMarking] = useState(false);
+  const [marked, setMarked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,11 +45,36 @@ function DonorProfileContent() {
     setDonations(donationsData || []);
 
     // Allow call only if current user is the requester of an accepted donation
-    const allowed = (acceptedData || []).some(
+    const acceptedEntry = (acceptedData || []).find(
       (d) => d.blood_requests?.requester_id === user?.id
     );
-    setCanCall(allowed);
+    setCanCall(!!acceptedEntry);
+    if (acceptedEntry) setAcceptedDonationId(acceptedEntry.id);
     setLoading(false);
+  }
+
+  async function markAsDonated() {
+    if (!acceptedDonationId) return;
+    setMarking(true);
+    try {
+      // Mark donation as completed
+      await supabase
+        .from('donations')
+        .update({ status: 'completed' })
+        .eq('id', acceptedDonationId);
+
+      // Increment donor's lives_saved
+      await supabase
+        .from('profiles')
+        .update({ lives_saved: (donor.lives_saved || 0) + 1 })
+        .eq('id', params.id);
+
+      setMarked(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMarking(false);
+    }
   }
 
   if (loading) {
@@ -116,12 +144,29 @@ function DonorProfileContent() {
 
         {/* Call Now — only visible to requesters whose request this donor accepted */}
         {canCall ? (
-          <a
-            href={`tel:${donor.phone}`}
-            className="block w-full bg-[#E8334A] text-white font-bold py-4 rounded-full text-center text-base hover:bg-[#C4253A] transition-colors"
-          >
-            Call Now — {donor.phone}
-          </a>
+          <div className="flex flex-col gap-3">
+            <a
+              href={`tel:${donor.phone}`}
+              className="block w-full bg-[#E8334A] text-white font-bold py-4 rounded-full text-center text-base hover:bg-[#C4253A] transition-colors"
+            >
+              Call Now — {donor.phone}
+            </a>
+
+            {/* Mark as Donated — shown only to requester, disappears after marked */}
+            {marked ? (
+              <div className="w-full bg-green-50 border border-green-200 text-green-700 py-4 rounded-full text-center text-sm font-semibold">
+                ✓ Donation marked as complete — added to history!
+              </div>
+            ) : (
+              <button
+                onClick={markAsDonated}
+                disabled={marking}
+                className="w-full bg-white border-2 border-[#E8334A] text-[#E8334A] font-bold py-4 rounded-full text-center text-base hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                {marking ? 'Saving...' : 'Donation Done? Mark as Complete'}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-full text-center text-sm">
             Phone number hidden — only visible after donor accepts your request

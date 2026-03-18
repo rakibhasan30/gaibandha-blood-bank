@@ -1,6 +1,8 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const tabs = [
   {
@@ -59,6 +61,43 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let channel;
+
+    async function fetchUnread() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+        .eq('is_read', false);
+
+      setUnreadCount(count || 0);
+
+      // Real-time updates
+      channel = supabase
+        .channel('unread_notifs')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${session.user.id}`,
+        }, () => fetchUnread())
+        .subscribe();
+    }
+
+    fetchUnread();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
+  // Reset badge when on notifications page
+  useEffect(() => {
+    if (pathname.startsWith('/notifications')) setUnreadCount(0);
+  }, [pathname]);
 
   function isActive(href) {
     return pathname.startsWith(href);
@@ -89,7 +128,14 @@ export default function BottomNav() {
               onClick={() => router.push(tab.href)}
               className="flex flex-col items-center gap-0.5 py-2 px-3"
             >
-              {tab.icon(active)}
+              <div className="relative">
+                {tab.icon(active)}
+                {tab.key === 'notifications' && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#E8334A] text-white text-[9px] font-bold rounded-full min-w-4 h-4 flex items-center justify-center px-1 leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </div>
               <span className={`text-[10px] font-medium ${active ? 'text-[#E8334A]' : 'text-gray-400'}`}>
                 {tab.label}
               </span>

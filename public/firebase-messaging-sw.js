@@ -1,14 +1,12 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// These will be replaced at build time or read from the page context
-// For now use placeholders — the actual values come from the env
 firebase.initializeApp({
-  apiKey: self.FIREBASE_API_KEY || '',
-  authDomain: self.FIREBASE_AUTH_DOMAIN || '',
-  projectId: self.FIREBASE_PROJECT_ID || '',
-  messagingSenderId: self.FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: self.FIREBASE_APP_ID || '',
+  apiKey: 'AIzaSyB4cNu8BXckgy4gJ7bNlEf9Cqp4VxfkRW4',
+  authDomain: 'gaibandha-blood-bank.firebaseapp.com',
+  projectId: 'gaibandha-blood-bank',
+  messagingSenderId: '898790675545',
+  appId: '1:898790675545:web:e6571a0b3bc0904e514d48',
 });
 
 const messaging = firebase.messaging();

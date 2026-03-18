@@ -9,8 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 const STATUS_LABEL = {
   active: { text: 'Active', cls: 'bg-green-100 text-green-700' },
-  fulfilled: { text: 'Fulfilled', cls: 'bg-blue-100 text-blue-700' },
-  closed: { text: 'Managed', cls: 'bg-gray-100 text-gray-500' },
+  fulfilled: { text: 'Managed', cls: 'bg-gray-100 text-gray-500' },
 };
 
 function MyRequestsContent() {
@@ -50,10 +49,10 @@ function MyRequestsContent() {
         if (!data || data.length === 0) throw new Error('Delete failed — permission denied or row not found.');
         setRequests((prev) => prev.filter((r) => r.id !== req.id));
       } else {
-        const { data, error } = await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', req.id).select();
+        const { data, error } = await supabase.from('blood_requests').update({ status: 'fulfilled' }).eq('id', req.id).select();
         if (error) throw error;
         if (!data || data.length === 0) throw new Error('Update failed — permission denied or row not found.');
-        setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'closed' } : r));
+        setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'fulfilled' } : r));
       }
     } catch (err) {
       alert('Failed: ' + (err.message || 'Something went wrong. Check Supabase RLS policies.'));

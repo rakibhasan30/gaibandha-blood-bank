@@ -132,7 +132,7 @@ function RequestDetailContent() {
         if (error) throw error;
         if (!data || data.length === 0) throw new Error('Delete failed — permission denied or row not found.');
       } else {
-        const { data, error } = await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', request.id).select();
+        const { data, error } = await supabase.from('blood_requests').update({ status: 'fulfilled' }).eq('id', request.id).select();
         if (error) throw error;
         if (!data || data.length === 0) throw new Error('Update failed — permission denied or row not found.');
       }

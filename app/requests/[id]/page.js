@@ -128,14 +128,16 @@ function RequestDetailContent() {
     setClosing(true);
     try {
       if (type === 'delete') {
-        await supabase.from('blood_requests').delete().eq('id', request.id);
+        const { error } = await supabase.from('blood_requests').delete().eq('id', request.id);
+        if (error) throw error;
       } else {
-        await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', request.id);
+        const { error } = await supabase.from('blood_requests').update({ status: 'closed' }).eq('id', request.id);
+        if (error) throw error;
       }
       router.replace('/account/requests');
     } catch (err) {
-      setToast('Something went wrong. Please try again.');
-      setTimeout(() => setToast(''), 3000);
+      setToast('Failed: ' + (err.message || 'Something went wrong.'));
+      setTimeout(() => setToast(''), 4000);
     } finally {
       setClosing(false);
     }

@@ -8,20 +8,26 @@ import DonorCard from '@/components/DonorCard';
 import SelectField from '@/components/SelectField';
 import { supabase } from '@/lib/supabase';
 import { BLOOD_GROUPS } from '@/lib/constants';
+import { useAuth } from '@/hooks/useAuth';
 
 function DonorsContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [donors, setDonors] = useState([]);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDonors();
-  }, [filter]);
+    if (user) fetchDonors();
+  }, [filter, user]);
 
   async function fetchDonors() {
     setLoading(true);
-    let query = supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    let query = supabase
+      .from('profiles')
+      .select('*')
+      .neq('id', user.id)
+      .order('created_at', { ascending: false });
     if (filter) query = query.eq('blood_group', filter);
     const { data } = await query;
     setDonors(data || []);
